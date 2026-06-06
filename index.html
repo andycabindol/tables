@@ -10,10 +10,24 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root {
+      --purple-950: #3b0764;
+      --purple-800: #5b21b6;
+      --purple-700: #6d28d9;
+      --purple-600: #7c3aed;
+      --purple-500: #8b5cf6;
+      --purple-400: #a78bfa;
+      --purple-300: #c4b5fd;
+      --purple-200: #ddd6fe;
+      --purple-100: #ede9fe;
+      --purple-50: #faf5ff;
+      --text-muted: #7e6b9e;
+    }
+
     body {
       font-family: "Montserrat", sans-serif;
-      background: #fff;
-      color: #000;
+      background: var(--purple-50);
+      color: var(--purple-950);
       line-height: 1.5;
       min-height: 100vh;
     }
@@ -28,13 +42,14 @@
       font-weight: 700;
       letter-spacing: 0.02em;
       margin-bottom: 0.75rem;
+      color: var(--purple-800);
     }
 
     .subtitle {
       font-size: clamp(1rem, 2.5vw, 1.15rem);
       max-width: 36rem;
       margin: 0 auto;
-      color: #333;
+      color: var(--text-muted);
     }
 
     .search-wrap {
@@ -51,10 +66,10 @@
       font-family: inherit;
       font-size: 1rem;
       padding: 0.75rem 1rem;
-      border: 1px solid #d4d4d4;
+      border: 1px solid var(--purple-300);
       border-radius: 12px;
       outline: none;
-      color: #000;
+      color: var(--purple-950);
       background: #fff;
     }
 
@@ -67,11 +82,12 @@
     }
 
     .search-input::placeholder {
-      color: #999;
+      color: var(--purple-400);
     }
 
     .search-input:focus {
-      border-color: #888;
+      border-color: var(--purple-600);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
     }
 
     .search-clear {
@@ -83,10 +99,10 @@
       width: 1.35rem;
       height: 1.35rem;
       padding: 0;
-      border: 1px solid #bbb;
+      border: 1px solid var(--purple-300);
       border-radius: 50%;
       background: #fff;
-      color: #888;
+      color: var(--purple-500);
       cursor: pointer;
       align-items: center;
       justify-content: center;
@@ -97,8 +113,8 @@
     }
 
     .search-clear:hover {
-      border-color: #888;
-      color: #555;
+      border-color: var(--purple-500);
+      color: var(--purple-700);
     }
 
     .search-clear svg {
@@ -119,21 +135,23 @@
     }
 
     .table-card {
-      border: 1px solid #d4d4d4;
+      border: 1px solid var(--purple-200);
       border-radius: 12px;
       padding: 1.25rem 1.25rem 1rem;
+      background: #fff;
     }
 
     .table-title {
       font-size: 1.05rem;
       font-weight: 700;
       margin-bottom: 0.75rem;
+      color: var(--purple-800);
     }
 
     .table-label {
       font-size: 0.75rem;
       font-weight: 700;
-      color: #888;
+      color: var(--purple-400);
     }
 
     .guest-list {
@@ -147,34 +165,45 @@
 
     .guest-list li.match {
       font-weight: 700;
+      color: var(--purple-700);
     }
 
     .no-results {
       text-align: center;
       padding: 2rem 1rem;
-      color: #555;
+      color: var(--text-muted);
     }
 
     .status {
       text-align: center;
       padding: 3rem 1.5rem;
-      color: #555;
+      color: var(--text-muted);
     }
 
     .status.error {
-      color: #000;
-      border: 1px solid #000;
+      color: var(--purple-950);
+      border: 1px solid var(--purple-300);
       max-width: 28rem;
       margin: 2rem auto;
       padding: 1.5rem;
+      background: #fff;
     }
 
     footer {
       text-align: center;
       padding: 1rem 1.5rem 2rem;
       font-size: 0.8rem;
-      color: #666;
-      border-top: 1px solid #ccc;
+      color: var(--text-muted);
+      border-top: 1px solid var(--purple-200);
+    }
+
+    #confetti {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
     }
 
     @media (max-width: 480px) {
@@ -381,6 +410,80 @@
       applySearch();
     });
     document.getElementById('search-clear').addEventListener('click', clearSearch);
+
+    function launchConfetti() {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      const canvas = document.createElement('canvas');
+      canvas.id = 'confetti';
+      document.body.appendChild(canvas);
+      const ctx = canvas.getContext('2d');
+
+      const resize = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      };
+      resize();
+      window.addEventListener('resize', resize);
+
+      const colors = [
+        '#3b0764', '#5b21b6', '#6d28d9', '#7c3aed',
+        '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe',
+        '#9333ea', '#a855f7', '#d8b4fe', '#e9d5ff',
+      ];
+      const pieces = Array.from({ length: 120 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height - canvas.height,
+        w: 6 + Math.random() * 6,
+        h: 4 + Math.random() * 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * Math.PI * 2,
+        spin: (Math.random() - 0.5) * 0.2,
+        speed: 2 + Math.random() * 3,
+        drift: (Math.random() - 0.5) * 1.5,
+        opacity: 0.7 + Math.random() * 0.3,
+      }));
+
+      const duration = 3500;
+      const start = performance.now();
+
+      function frame(now) {
+        const elapsed = now - start;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (const p of pieces) {
+          p.y += p.speed;
+          p.x += p.drift;
+          p.rotation += p.spin;
+
+          if (elapsed > duration * 0.6) {
+            p.opacity = Math.max(0, p.opacity - 0.02);
+          }
+
+          ctx.save();
+          ctx.globalAlpha = p.opacity;
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        }
+
+        const allDone = elapsed > duration && pieces.every(p => p.opacity <= 0 || p.y > canvas.height + 20);
+
+        if (allDone) {
+          window.removeEventListener('resize', resize);
+          canvas.remove();
+          return;
+        }
+
+        requestAnimationFrame(frame);
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    launchConfetti();
 
     loadSeating();
     setInterval(loadSeating, REFRESH_MS);
