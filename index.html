@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Andy's Grad Party Seating</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Montserrat", sans-serif;
+      background: #fff;
+      color: #000;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      padding: 2.5rem 1.5rem 2rem;
+    }
+
+    h1 {
+      font-size: clamp(1.75rem, 5vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      margin-bottom: 0.75rem;
+    }
+
+    .subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.15rem);
+      max-width: 36rem;
+      margin: 0 auto;
+      color: #333;
+    }
+
+    .search-wrap {
+      max-width: 22rem;
+      margin: 1.5rem auto 0;
+    }
+
+    .search-field {
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      font-family: inherit;
+      font-size: 1rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid #d4d4d4;
+      border-radius: 12px;
+      outline: none;
+      color: #000;
+      background: #fff;
+    }
+
+    .search-field.has-text .search-input {
+      padding-right: 2.75rem;
+    }
+
+    .search-input::-webkit-search-cancel-button {
+      display: none;
+    }
+
+    .search-input::placeholder {
+      color: #999;
+    }
+
+    .search-input:focus {
+      border-color: #888;
+    }
+
+    .search-clear {
+      display: none;
+      position: absolute;
+      right: 0.65rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1.35rem;
+      height: 1.35rem;
+      padding: 0;
+      border: 1px solid #bbb;
+      border-radius: 50%;
+      background: #fff;
+      color: #888;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .search-field.has-text .search-clear {
+      display: flex;
+    }
+
+    .search-clear:hover {
+      border-color: #888;
+      color: #555;
+    }
+
+    .search-clear svg {
+      width: 0.55rem;
+      height: 0.55rem;
+    }
+
+    main {
+      max-width: 72rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 3rem;
+    }
+
+    .tables {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+      gap: 1.5rem;
+    }
+
+    .table-card {
+      border: 1px solid #d4d4d4;
+      border-radius: 12px;
+      padding: 1.25rem 1.25rem 1rem;
+    }
+
+    .table-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .table-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #888;
+    }
+
+    .guest-list {
+      list-style: none;
+    }
+
+    .guest-list li {
+      padding: 0.2rem 0;
+      font-size: 0.95rem;
+    }
+
+    .guest-list li.match {
+      font-weight: 700;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: #555;
+    }
+
+    .status {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      color: #555;
+    }
+
+    .status.error {
+      color: #000;
+      border: 1px solid #000;
+      max-width: 28rem;
+      margin: 2rem auto;
+      padding: 1.5rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1rem 1.5rem 2rem;
+      font-size: 0.8rem;
+      color: #666;
+      border-top: 1px solid #ccc;
+    }
+
+    @media (max-width: 480px) {
+      .tables { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Andy's Grad Party Seating</h1>
+    <p class="subtitle">Find your table named after significant locations during Andy's college years</p>
+    <div class="search-wrap">
+      <div class="search-field" id="search-field">
+        <input type="search" id="search" class="search-input" placeholder="Search for your name" autocomplete="off" spellcheck="false">
+        <button type="button" class="search-clear" id="search-clear" aria-label="Clear search">
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M2 2l8 8M10 2L2 10"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="content" class="status">Loading seating chart…</div>
+  </main>
+
+  <footer id="footer"></footer>
+
+  <script>
+    const SHEET_ID = '10keqGmpUrtdvzbjb1PCLuUjZ2PNv2ltm6lSEVnv1lu8';
+    const REFRESH_MS = 30_000;
+    let allTables = [];
+
+    function matchesQuery(text, query) {
+      return text.toLowerCase().includes(query.toLowerCase());
+    }
+
+    function getSearchQuery() {
+      return document.getElementById('search').value.trim();
+    }
+
+    function updateSearchClear() {
+      const field = document.getElementById('search-field');
+      field.classList.toggle('has-text', document.getElementById('search').value.length > 0);
+    }
+
+    function clearSearch() {
+      const input = document.getElementById('search');
+      input.value = '';
+      updateSearchClear();
+      applySearch();
+      input.focus();
+    }
+
+    function isGuestName(value) {
+      if (value == null) return false;
+      const text = String(value).trim();
+      if (!text) return false;
+      if (/^\d+$/.test(text)) return false;
+      return true;
+    }
+
+    function toTitleCase(text) {
+      return text.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+    }
+
+    function parseTableHeader(header) {
+      const match = String(header).match(/^Table\s+(\d+)\s*-\s*(.+)$/i);
+      if (match) {
+        return {
+          location: toTitleCase(match[2].trim()),
+          number: match[1],
+        };
+      }
+      return { location: header, number: '' };
+    }
+
+    function parseSheetData(data) {
+      if (data.status !== 'ok' || !data.table) {
+        throw new Error('Sheet returned an error');
+      }
+
+      const table = data.table;
+      const headers = table.cols.map(col => col.label || '');
+
+      return headers
+        .map((header, colIndex) => {
+          if (!header.trim()) return null;
+
+          const guests = table.rows
+            .map(row => row.c[colIndex]?.v)
+            .filter(isGuestName);
+
+          return { ...parseTableHeader(header), guests };
+        })
+        .filter(Boolean);
+    }
+
+    function fetchSheetData() {
+      return new Promise((resolve, reject) => {
+        const callbackName = `_sheetCb_${Date.now()}`;
+        const script = document.createElement('script');
+
+        const cleanup = () => {
+          delete window[callbackName];
+          script.remove();
+        };
+
+        window[callbackName] = (data) => {
+          cleanup();
+          resolve(data);
+        };
+
+        script.onerror = () => {
+          cleanup();
+          reject(new Error('Could not load seating chart'));
+        };
+
+        script.src =
+          `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq` +
+          `?tqx=out:json;responseHandler:${callbackName}` +
+          `&headers=1&range=A1:I20&_=${Date.now()}`;
+
+        document.head.appendChild(script);
+      });
+    }
+
+    function renderTables(tables, query = '') {
+      const visible = query
+        ? tables.filter(table => table.guests.some(name => matchesQuery(name, query)))
+        : tables;
+
+      if (!visible.length) {
+        document.getElementById('content').className = '';
+        document.getElementById('content').innerHTML =
+          `<p class="no-results">No matching names found.</p>`;
+        return;
+      }
+
+      const html = `
+        <div class="tables">
+          ${visible.map(table => `
+            <article class="table-card">
+              <h2 class="table-title">${escapeHtml(table.location)} <span class="table-label">Table ${escapeHtml(table.number)}</span></h2>
+              <ul class="guest-list">
+                ${table.guests.map(name => {
+                  const isMatch = query && matchesQuery(name, query);
+                  return `<li${isMatch ? ' class="match"' : ''}>${escapeHtml(name)}</li>`;
+                }).join('')}
+              </ul>
+            </article>
+          `).join('')}
+        </div>
+      `;
+
+      document.getElementById('content').className = '';
+      document.getElementById('content').innerHTML = html;
+    }
+
+    function applySearch() {
+      renderTables(allTables, getSearchQuery());
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function showError(message) {
+      const el = document.getElementById('content');
+      el.className = 'status error';
+      el.textContent = message;
+    }
+
+    function updateFooter() {
+      const now = new Date().toLocaleString(undefined, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      });
+      document.getElementById('footer').textContent = `Last updated ${now} · refreshes automatically`;
+    }
+
+    async function loadSeating() {
+      try {
+        const data = await fetchSheetData();
+        const tables = parseSheetData(data);
+
+        if (!tables.length) throw new Error('No tables found in the sheet');
+        allTables = tables;
+        applySearch();
+        updateFooter();
+      } catch (err) {
+        showError('Unable to load seating chart. Please try again in a moment.');
+        console.error(err);
+      }
+    }
+
+    document.getElementById('search').addEventListener('input', () => {
+      updateSearchClear();
+      applySearch();
+    });
+    document.getElementById('search-clear').addEventListener('click', clearSearch);
+
+    loadSeating();
+    setInterval(loadSeating, REFRESH_MS);
+  </script>
+</body>
+</html>
