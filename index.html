@@ -214,7 +214,7 @@
 <body>
   <header>
     <h1>Welcome to Andy's Grad Party!</h1>
-    <p class="subtitle">Find your table named after significant locations during Andy's college years</p>
+    <p class="subtitle">Find your table named after meaningful locations during Andy's college years</p>
     <div class="search-wrap">
       <div class="search-field" id="search-field">
         <input type="search" id="search" class="search-input" placeholder="Search for your name" autocomplete="off" spellcheck="false">
@@ -231,7 +231,7 @@
     <div id="content" class="status">Loading seating chart…</div>
   </main>
 
-  <footer id="footer"></footer>
+  <footer id="footer">Built by Andy Cabindol</footer>
 
   <script>
     const SHEET_ID = '10keqGmpUrtdvzbjb1PCLuUjZ2PNv2ltm6lSEVnv1lu8';
@@ -382,14 +382,6 @@
       el.textContent = message;
     }
 
-    function updateFooter() {
-      const now = new Date().toLocaleString(undefined, {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      });
-      document.getElementById('footer').textContent = `Last updated ${now} · refreshes automatically`;
-    }
-
     async function loadSeating() {
       try {
         const data = await fetchSheetData();
@@ -398,7 +390,6 @@
         if (!tables.length) throw new Error('No tables found in the sheet');
         allTables = tables;
         applySearch();
-        updateFooter();
       } catch (err) {
         showError('Unable to load seating chart. Please try again in a moment.');
         console.error(err);
